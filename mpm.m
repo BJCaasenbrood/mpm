@@ -7,6 +7,7 @@ function mpm(action, varargin)
 %   'search'    finds a url for a package by name (searches Github and File Exchange)
 %   'install'   installs a package by name
 %   'uninstall' installs a package by name
+%   'disable'   removes packages from path by name
 %   'freeze'    list all installed packages (optional: in install-dir)
 %   'set'       change options for an already installed package
 %
@@ -108,6 +109,28 @@ function mpm(action, varargin)
     % mpm uninstall
     if strcmpi(opts.action, 'uninstall')
         removePackage(package, opts);
+        return;
+    end
+
+    % mpm uninstall
+    if strcmpi(opts.action, 'goto')
+        %removePackage(package, opts);
+        path = opts.installDir;
+        if ~isempty(package.name)
+            path = [path,'/',package.name];
+        end
+        cd(path);
+        return;
+    end
+
+    % mpm uninstall
+    if strcmpi(opts.action, 'disable')
+        %removePackage(package, opts);
+        path = opts.installDir;
+        if ~isempty(package.name)
+            path = [path,'/',package.name];
+        end
+        rmpath(genpath(path));
         return;
     end
 
@@ -656,7 +679,7 @@ function mdir = findMDirOfPackage(package)
     warning(i18n('mdir_404'));
     disp(i18n('mdir_help', package.name));
     dispTree(package.installDir);
-    tree
+%    tree
     mdir = '';
 end
 
@@ -845,7 +868,9 @@ function [package, opts] = parseArgs(package, opts, action, varargin)
         'install',                                                          ...
         'uninstall',                                                        ...
         'freeze',                                                           ...
-        'set'                                                               ...
+        'set',                                                              ...
+        'goto',                                                             ...
+        'disable'
     };
     checkAction = @(x) any(validatestring(x, actions));
     addRequired(q, 'action', checkAction);
@@ -875,7 +900,8 @@ function [package, opts] = parseArgs(package, opts, action, varargin)
 
     % no additional args
     if numel(remainingArgs) == 0
-        if strcmpi(opts.action, 'freeze') || strcmpi(opts.action, 'init')
+        if strcmpi(opts.action, 'freeze') || strcmpi(opts.action, 'init')   ...
+        || strcmpi(opts.action, 'goto') || strcmpi(opts.action, 'disable')
             package.query = '';
             return;
         else
@@ -983,7 +1009,7 @@ function isOk = validateArgs(package, opts)
         return;
     end
     if isempty(package.name) && isempty(opts.inFile)
-        if ~strcmpi(opts.action, 'freeze')
+        if ~strcmpi(opts.action, 'freeze') && ~strcmpi(opts.action, 'goto')
             error(i18n('parseargs_noargin'));
         end
     end
@@ -1273,3 +1299,4 @@ function str = i18n(key, varargin)
     xs = cellfun(@char, varargin, 'uni', false);
     str = sprintf(str, xs{:});
 end
+
